@@ -1,0 +1,7 @@
+# TODO: Docker image for NIDS agent
+FROM python:3.11-slim
+WORKDIR /app
+COPY agents/ ./agents/
+COPY shared/ ./shared/
+RUN pip install -r agents/requirements.txt
+CMD ["python", "agents/main.py"]

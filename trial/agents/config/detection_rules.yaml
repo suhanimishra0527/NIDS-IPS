@@ -1,0 +1,29 @@
+# Detection rules configuration
+# TODO: Externalize signature patterns and thresholds
+
+signatures:
+  sqli:
+    enabled: true
+    base_score: 85
+  xss:
+    enabled: true
+    base_score: 75
+  dir_traversal:
+    enabled: true
+    base_score: 80
+  command_injection:
+    enabled: true
+    base_score: 90
+
+port_scan:
+  window_sec: 10
+  threshold: 20
+  scores:
+    SYN: 65
+    FIN: 70
+    NULL: 75
+    XMAS: 70
+
+anomaly:
+  pps_threshold: 500
+  score: 55

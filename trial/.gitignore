@@ -1,0 +1,56 @@
+# NIDS-IPS .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+server/config/secrets.yaml
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Certs (real ones)
+certs/*.crt
+certs/*.key
+certs/*.pem
+!certs/README.md
+
+# Cache
+agents/data/cache/*
+!agents/data/cache/.gitkeep
+
+# Agent local data
+agents/data/logs/*
+!agents/data/logs/.gitkeep
+offline_queue.jsonl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore

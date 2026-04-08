@@ -1,0 +1,8 @@
+# Server connection details
+# TODO: Configure for your NIDS server
+
+server:
+  url: "http://localhost:5000"
+  registration_key: "changeme"
+  timeout: 10
+  retry_interval: 30

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}NIDS Dashboard{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-card: #161b22;
+      --bg-card2: #1c2333;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --danger: #ff4444;
+      --warning: #f0883e;
+      --text-muted: #8b949e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: #e6edf3;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: var(--bg-card) !important;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .navbar-brand {
+      color: var(--accent) !important;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .nav-link {
+      color: #c9d1d9 !important;
+      transition: color .2s;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--accent) !important;
+    }
+
+    .sidebar {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      min-height: calc(100vh - 56px);
+      padding-top: 1.5rem;
+    }
+
+    .sidebar .nav-link {
+      padding: .6rem 1.2rem;
+      border-radius: 6px;
+      margin: 2px 8px;
+      font-size: .9rem;
+    }
+
+    .sidebar .nav-link:hover {
+      background: var(--bg-card2);
+    }
+
+    .sidebar .nav-link.active {
+      background: rgba(88, 166, 255, .15);
+      color: var(--accent) !important;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    }
+
+    .stat-card .stat-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+    }
+
+    .stat-card .stat-label {
+      color: var(--text-muted);
+      font-size: .85rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .stat-card .stat-icon {
+      font-size: 2rem;
+      opacity: .7;
+    }
+
+    .card-custom {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .card-custom .card-header {
+      background: var(--bg-card2);
+      border-bottom: 1px solid var(--border);
+      border-radius: 12px 12px 0 0;
+      padding: .75rem 1.25rem;
+      font-weight: 600;
+    }
+
+    .table {
+      color: #e6edf3;
+    }
+
+    .table-dark {
+      --bs-table-bg: transparent;
+      --bs-table-border-color: var(--border);
+    }
+
+    .table>thead>tr>th {
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: .8rem;
+      text-transform: uppercase;
+    }
+
+    .table>tbody>tr:hover {
+      background: rgba(88, 166, 255, .05);
+    }
+
+    .badge-critical {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .badge-high {
+      background: #7c2d12;
+      color: #fdba74;
+    }
+
+    .badge-medium {
+      background: #713f12;
+      color: #fde68a;
+    }
+
+    .badge-low {
+      background: #14532d;
+      color: #86efac;
+    }
+
+    .badge-log {
+      background: rgba(88, 166, 255, .15);
+      color: var(--accent);
+    }
+
+    .badge-drop {
+      background: rgba(240, 136, 62, .15);
+      color: var(--warning);
+    }
+
+    .badge-block {
+      background: rgba(255, 68, 68, .15);
+      color: var(--danger);
+    }
+
+    .badge-online {
+      background: rgba(63, 185, 80, .15);
+      color: var(--accent2);
+    }
+
+    .badge-offline {
+      background: rgba(255, 68, 68, .15);
+      color: var(--danger);
+    }
+
+    .pulse-online {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 0 2px rgba(63, 185, 80, .3);
+      animation: pulse 2s infinite;
+    }
+
+    .pulse-offline {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 2px rgba(63, 185, 80, .3);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px rgba(63, 185, 80, .1);
+      }
+    }
+
+    .agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      transition: border-color .2s;
+    }
+
+    .agent-card.online {
+      border-left: 3px solid var(--accent2);
+    }
+
+    .agent-card.offline {
+      border-left: 3px solid var(--danger);
+    }
+
+    .fade-in {
+      animation: fadeIn .4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .refresh-badge {
+      font-size: .7rem;
+      color: var(--text-muted);
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+  {% block extra_style %}<style></style>{% endblock %}
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/"><i class="bi bi-shield-fill-check me-2"></i>NIDS Command Center</a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="refresh-badge" id="last-refresh">—</span>
+        <span class="badge bg-secondary">v1.0</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <div class="sidebar d-none d-md-block" style="width:220px;flex-shrink:0;">
+      <nav class="nav flex-column">
+        <a href="/" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+          <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+        <a href="/alerts" class="nav-link {% if request.endpoint == 'dashboard.alerts_page' %}active{% endif %}">
+          <i class="bi bi-exclamation-triangle me-2"></i>Alerts
+        </a>
+        <a href="/blocklist" class="nav-link {% if request.endpoint == 'dashboard.blocklist_page' %}active{% endif %}">
+          <i class="bi bi-ban me-2"></i>Blocklist
+        </a>
+        <hr style="border-color:var(--border);margin:.5rem 1rem;">
+        <a href="/api/global_blocklist" class="nav-link" target="_blank">
+          <i class="bi bi-code-slash me-2"></i>API
+        </a>
+      </nav>
+    </div>
+
+    <!-- Main content -->
+    <main class="flex-grow-1 p-4">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function updateRefreshTime() {
+      const el = document.getElementById('last-refresh');
+      if (el) el.textContent = 'Refreshed ' + new Date().toLocaleTimeString();
+    }
+    updateRefreshTime();
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Alerts — NIDS{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Alert Feed</h4>
+            <small class="text-muted">{{ pagination.total }} total alerts</small>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="card-custom p-3 mb-4">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label text-muted" style="font-size:.8rem">Attack Type</label>
+                <select name="attack_type" class="form-select form-select-sm bg-dark text-light border-secondary">
+                    <option value="">All</option>
+                    {% for at in attack_types %}
+                    <option value="{{ at }}" {% if attack_filter==at %}selected{% endif %}>{{ at }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-muted" style="font-size:.8rem">Severity</label>
+                <select name="severity" class="form-select form-select-sm bg-dark text-light border-secondary">
+                    <option value="">All</option>
+                    {% for sev in ['CRITICAL','HIGH','MEDIUM','LOW'] %}
+                    <option value="{{ sev }}" {% if severity_filter==sev %}selected{% endif %}>{{ sev }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                <a href="/alerts" class="btn btn-sm btn-outline-secondary ms-1">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="card-custom">
+        <div class="card-header"><i class="bi bi-table me-2"></i>Alerts (Page {{ pagination.page }} of {{
+            pagination.pages }})</div>
+        <div style="overflow-x:auto;">
+            <table class="table table-dark table-hover mb-0" style="font-size:.83rem">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Timestamp</th>
+                        <th>Agent</th>
+                        <th>Src IP : Port</th>
+                        <th>Dst IP : Port</th>
+                        <th>Protocol</th>
+                        <th>Attack Type</th>
+                        <th>Score</th>
+                        <th>Severity</th>
+                        <th>Action</th>
+                        <th>Payload</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr>
+                        <td class="text-muted">{{ alert.id }}</td>
+                        <td class="text-muted" style="white-space:nowrap">{{ alert.timestamp.strftime('%Y-%m-%d
+                            %H:%M:%S') }}</td>
+                        <td>{{ alert.agent.name if alert.agent else '—' }}</td>
+                        <td><code style="color:var(--accent)">{{ alert.src_ip }}:{{ alert.src_port or '?' }}</code></td>
+                        <td><code
+                                style="color:var(--text-muted)">{{ alert.dst_ip or '?' }}:{{ alert.dst_port or '?' }}</code>
+                        </td>
+                        <td>{{ alert.protocol or '—' }}</td>
+                        <td><strong>{{ alert.attack_type }}</strong></td>
+                        <td>
+                            <span
+                                class="fw-bold {% if alert.threat_score >= 80 %}text-danger{% elif alert.threat_score >= 50 %}text-warning{% else %}text-info{% endif %}">{{
+                                alert.threat_score }}</span>
+                        </td>
+                        <td><span class="badge badge-{{ alert.severity|lower }}">{{ alert.severity }}</span></td>
+                        <td><span class="badge badge-{{ alert.action_taken|lower }}">{{ alert.action_taken }}</span>
+                        </td>
+                        <td style="max-width:200px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">
+                            <small class="text-muted" title="{{ alert.payload_snippet }}">{{ alert.payload_snippet or
+                                '—' }}</small>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-4">No alerts found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="p-3 d-flex justify-content-center">
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if pagination.has_prev %}
+                    <li class="page-item"><a class="page-link bg-dark border-secondary text-light"
+                            href="?page={{ pagination.prev_num }}&attack_type={{ attack_filter }}&severity={{ severity_filter }}">‹</a>
+                    </li>
+                    {% endif %}
+                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link bg-dark border-secondary{% if p == pagination.page %} text-dark bg-info{% else %} text-light{% endif %}"
+                            href="?page={{ p }}&attack_type={{ attack_filter }}&severity={{ severity_filter }}">{{ p
+                            }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link bg-dark border-secondary text-muted">…</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if pagination.has_next %}
+                    <li class="page-item"><a class="page-link bg-dark border-secondary text-light"
+                            href="?page={{ pagination.next_num }}&attack_type={{ attack_filter }}&severity={{ severity_filter }}">›</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

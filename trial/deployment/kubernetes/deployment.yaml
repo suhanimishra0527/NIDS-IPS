@@ -1,0 +1,5 @@
+# TODO: Kubernetes deployment manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nids-server

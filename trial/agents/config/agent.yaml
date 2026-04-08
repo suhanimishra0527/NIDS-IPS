@@ -1,0 +1,26 @@
+# Agent configuration
+# TODO: Implement YAML config loading in agent
+
+server_url: "http://localhost:5000"
+agent_name: "agent-1"
+agent_token: ""
+interface: ""
+
+thresholds:
+  threat_score_log: 30
+  threat_score_drop: 50
+  threat_score_block: 80
+
+reporting:
+  batch_interval_sec: 5
+  batch_max_alerts: 10
+  heartbeat_interval: 30
+  sync_interval: 60
+
+blocklist:
+  local_block_ttl: 3600
+
+detection:
+  portscan_window_sec: 10
+  portscan_threshold: 20
+  anomaly_pps_threshold: 500
