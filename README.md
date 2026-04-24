@@ -6,23 +6,24 @@ A Python-based distributed **Network Intrusion Detection + Prevention System** w
 
 ---
 
-## Architecture
+## Architecture (Single-OS Kali Linux)
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  Central Server                     │
-│   Flask REST API + Web Dashboard                    │
-│   PostgreSQL (alerts, agents, blocklist)            │
-│   Redis (command queues, blocklist cache)           │
-└──────────────────┬──────────────────────────────────┘
-                   │  JWT-authenticated REST
-       ┌───────────┼───────────┐
-       ▼           ▼           ▼
-  ┌─────────┐ ┌─────────┐ ┌─────────┐
-  │ Agent 1 │ │ Agent 2 │ │ Agent N │
-  │ Scapy   │ │ Scapy   │ │ Scapy   │
-  │ iptables│ │ iptables│ │ iptables│
-  └─────────┘ └─────────┘ └─────────┘
+│                 Kali Linux Machine                  │
+│                                                     │
+│   ┌─────────────────────────────────────────────┐   │
+│   │ Central Server (http://127.0.0.1:5000)      │   │
+│   │ Flask REST API + Web Dashboard              │   │
+│   │ PostgreSQL + Redis (Local)                  │   │
+│   └───────▲──────────────────────────────▲──────┘   │
+│           │ Local API Transfer (RAM)     │          │
+│   ┌───────┴──────────────────────────────┴──────┐   │
+│   │ Edge Agent (Running as Root)                │   │
+│   │ Scapy (Listening on eth0/wlan0)             │   │
+│   │ iptables (Real IPS Blocks)                  │   │
+│   └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -71,230 +72,36 @@ NIDS TEST/
 
 ---
 
-## Quick Start
-
-| Component | Platform | Requirement |
-|---|---|---|
-| **Server** | Windows or Linux | Python 3.11+, PostgreSQL 14+, Redis 7+ |
-| **Agent** | Linux only (root) | Python 3.11+, libpcap, iptables |
-
----
-
-## Option A — Windows (Local Testing)
-
-### 1. Start PostgreSQL + Redis via Docker
-
-The fastest way on Windows — no manual DB install needed:
-
-```yaml
-# docker-compose.yml  (place in project root)
-version: "3"
-services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: nids_user
-      POSTGRES_PASSWORD: changeme
-      POSTGRES_DB: nids_db
-    ports: ["5432:5432"]
-  redis:
-    image: redis:7
-    ports: ["6379:6379"]
-```
-
-```powershell
-docker-compose up -d
-```
-
-Or install natively: [PostgreSQL for Windows](https://www.postgresql.org/download/windows/) + [Redis for Windows](https://github.com/tporadowski/redis/releases).  
-Then create the database manually in pgAdmin / psql:
-
-```sql
-CREATE USER nids_user WITH PASSWORD 'changeme';
-CREATE DATABASE nids_db OWNER nids_user;
-GRANT ALL PRIVILEGES ON DATABASE nids_db TO nids_user;
-```
-
-### 2. Set up the Python environment
-
-```powershell
-cd "c:\Users\ASUS\Desktop\NIDS TEST\server"
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 3. Configure environment variables (PowerShell)
-
-```powershell
-$env:DATABASE_URL           = "postgresql://nids_user:changeme@localhost:5432/nids_db"
-$env:REDIS_URL              = "redis://localhost:6379/0"
-$env:JWT_SECRET             = "change-me-to-something-long-and-random"
-$env:AGENT_REGISTRATION_KEY = "changeme"
-$env:PORT                   = "5000"
-```
-
-Or copy and edit the example env file:
-
-```powershell
-copy .env.example .env   # then edit .env in VS Code
-```
-
-### 4. Run the server
-
-```powershell
-python app.py
-# → [NIDS Server] Starting on 0.0.0.0:5000
-```
-
-Open **http://localhost:5000** — the dashboard will be live.
-
-### 5. Register a test agent
-
-```powershell
-# PowerShell
-Invoke-WebRequest -Uri http://localhost:5000/api/register `
-  -Method POST -ContentType "application/json" `
-  -Body '{"agent_name":"test-agent","registration_key":"changeme"}'
-```
-
-Or with Python:
-
-```python
-import requests
-r = requests.post("http://localhost:5000/api/register", json={
-    "agent_name": "test-agent",
-    "registration_key": "changeme"
-})
-print(r.json())  # → {"token": "eyJ..."}
-```
-
----
-
-## Option B — Linux (Production)
-
-### Server — Manual
-
-```bash
-cd server
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-
-cp .env.example .env
-nano .env   # Set DATABASE_URL, REDIS_URL, JWT_SECRET, AGENT_REGISTRATION_KEY
-
-source .env && python app.py
-# → Listening on http://0.0.0.0:5000
-```
-
-### Server — via Install Script (Debian/Ubuntu)
-
-```bash
-sudo bash scripts/install_server.sh
-# Installs PostgreSQL + Redis, creates DB/user, writes /etc/nids/server.env,
-# installs and starts the nids-server systemd service.
-```
-
-### Agent — Manual
-
-```bash
-# 1. Register and get a JWT
-curl -X POST http://SERVER_IP:5000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"agent_name":"agent-1","registration_key":"changeme"}'
-# → {"token": "eyJ..."}
-
-# 2. Set up environment
-cd agent
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-nano .env   # Set SERVER_URL, AGENT_NAME, AGENT_TOKEN, INTERFACE
-
-# 3. Run with root (required for Scapy raw socket + iptables)
-sudo -E python agent.py
-
-# Run without capture (reporter/sync only — no root needed):
-python agent.py --no-capture
-```
-
-### Agent — via Install Script
-
-```bash
-sudo bash scripts/install_agent.sh
-# Prompts: server URL, agent name, registration key, network interface.
-# Automatically calls /api/register, saves JWT, installs systemd service.
-```
-
----
-
-## Service Management (Linux systemd)
-
-```bash
-# Server
-sudo systemctl status nids-server
-sudo systemctl restart nids-server
-journalctl -u nids-server -f        # live logs
-
-# Agent
-sudo systemctl status nids-agent
-sudo systemctl restart nids-agent
-journalctl -u nids-agent -f         # live logs
-```
-
----
-
-## API Reference
-
-All agent endpoints require `Authorization: Bearer <JWT>` header.  
-Admin endpoints also accept `X-Admin-Key: <AGENT_REGISTRATION_KEY>`.
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/register` | None (reg key in body) | Register agent, get JWT |
-| `POST` | `/api/heartbeat` | Agent JWT | Send heartbeat + lightweight metrics |
-| `POST` | `/api/metrics` | Agent JWT | Send detailed metrics snapshot |
-| `GET`  | `/api/commands` | Agent JWT | Poll push commands (block IPs) |
-| `POST` | `/api/alerts` | Agent JWT | Submit batch of alert objects |
-| `GET`  | `/api/global_blocklist` | Agent JWT | Get active blocklist entries |
-| `POST` | `/api/global_blocklist` | Agent JWT / Admin | Add IP to global blocklist |
-| `DELETE` | `/api/global_blocklist/<id>` | Admin key | Remove blocklist entry |
-| `POST` | `/api/command/block` | Agent JWT / Admin | Block IP across all agents |
-| `GET`  | `/` | None | Web dashboard |
-| `GET`  | `/alerts` | None | Paginated alert feed |
-| `GET`  | `/blocklist` | None | Global blocklist manager |
-| `GET`  | `/api/dashboard/summary` | None | JSON summary for live refresh |
-
----
-
 ## Detection Rules
 
 ### Signature Detection (HTTP Payload)
 
 | Attack | Patterns | Base Score |
 |--------|----------|-----------|
-| SQL Injection | `UNION SELECT`, `OR 1=1`, `xp_cmdshell`, `SLEEP()`, … (12 patterns) | 85 |
-| XSS | `<script>`, `onerror=`, `javascript:`, `eval()`, … (10 patterns) | 75 |
-| Directory Traversal | `../`, `%2F`, `/etc/passwd`, `boot.ini`, … (8 patterns) | 80 |
+| RCE / Cmd Inject | `wget`, `bash -i`, `nc -e`, Log4j `jndi:` | 99 |
+| Botnets | User-Agents: `Mirai`, `Masscan`, `Kinsing` | 99 |
+| SQL Injection | `UNION SELECT`, `OR 1=1`, `xp_cmdshell` | 95 |
+| Directory Traversal | `../`, `%2F`, `/etc/passwd` | 95 |
+| XSS | `<script>`, `onerror=`, `eval()` | 90 |
 
-> Score is capped at base+10 for multiple pattern matches within the same category.
+> Score guarantees an instant CRITICAL alert and an immediate iptables DROP.
 
 ### Port Scan Detection (Sliding Window)
 
 | Scan Type | TCP Flags | Score |
 |-----------|-----------|-------|
-| SYN Scan | SYN only (0x02) | 65 |
-| FIN Scan | FIN only (0x01) | 70 |
-| NULL Scan | No flags (0x00) | 75 |
-| XMAS Scan | FIN+PSH+URG (0x29) | 70 |
+| XMAS Scan | FIN+PSH+URG (0x29) | 99 |
+| NULL Scan | No flags (0x00) | 95 |
+| FIN Scan | FIN only (0x01) | 95 |
+| SYN Scan | SYN only (0x02) | 90 |
 
-> Fires when ≥20 unique destination ports are hit within a 10-second window (configurable).
+> Fires instantly when **5 unique destination ports** are hit within a 10-second window.
 
 ### Rate Anomaly (Per-IP PPS)
 
-| Condition | Score |
-|-----------|-------|
-| Source IP exceeds 500 pps in 1-second window | 55 |
+| Condition | Score | Severity |
+|-----------|-------|----------|
+| Source IP exceeds **50 pps** in 1-second window | 95 | CRITICAL |
 
 ---
 

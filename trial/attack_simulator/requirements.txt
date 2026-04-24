@@ -1,3 +1,0 @@
-# Attack simulator dependencies (Python-based attacks)
-scapy>=2.5,<3
-requests>=2.31,<3

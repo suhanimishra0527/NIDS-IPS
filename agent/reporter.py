@@ -28,10 +28,27 @@ class Reporter:
         self._queue      = alert_queue
         self._lock       = queue_lock
         self._blocklist  = local_blocklist
+        # Create a robust session with automatic exponential backoff retries
         self._session    = requests.Session()
+        
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        
+        # Configure strong connection retries
+        retry_strategy = Retry(
+            total=5,  # Maximum number of retries
+            backoff_factor=1,  # Wait 1, 2, 4, 8 seconds between retries
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=10)
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
         self._session.headers.update({
             "Authorization": f"Bearer {AgentConfig.AGENT_TOKEN}",
             "Content-Type":  "application/json",
+            "User-Agent":    f"NIDS-Agent/{AgentConfig.AGENT_NAME}"
         })
         self._server_ok  = False          # Track server reachability
         self._offline_path = Path(AgentConfig.OFFLINE_QUEUE_FILE)

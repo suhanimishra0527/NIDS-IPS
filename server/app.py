@@ -64,5 +64,14 @@ if __name__ == "__main__":
     monitor = threading.Thread(target=_heartbeat_monitor, args=(app,), daemon=True)
     monitor.start()
 
-    print(f"[NIDS Server] Starting on {Config.HOST}:{Config.PORT}")
-    app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
+    # Optional HTTPS
+    ssl_ctx = None
+    if Config.SSL_CERT and Config.SSL_KEY:
+        ssl_ctx = (Config.SSL_CERT, Config.SSL_KEY)
+        print(f"[NIDS Server] Starting HTTPS on {Config.HOST}:{Config.PORT}")
+        print(f"  cert: {Config.SSL_CERT}")
+        print(f"  key:  {Config.SSL_KEY}")
+    else:
+        print(f"[NIDS Server] Starting HTTP on {Config.HOST}:{Config.PORT}")
+
+    app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG, ssl_context=ssl_ctx)

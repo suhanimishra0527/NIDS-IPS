@@ -1,4 +1,0 @@
-# Heroku deployment config
-build:
-  docker:
-    web: deployment/docker/Dockerfile.server

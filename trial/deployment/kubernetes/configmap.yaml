@@ -1,5 +1,0 @@
-# TODO: Kubernetes config map
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nids-config

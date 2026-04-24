@@ -1,8 +1,15 @@
 """
 Server configuration – driven entirely by environment variables.
-Copy .env.example to .env and source it before running.
+Loads .env automatically via python-dotenv (local .env first, then /etc/nids/server.env).
 """
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env from working directory first, then system-wide fallback
+load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=False)
+load_dotenv(dotenv_path="/etc/nids/server.env", override=False)
 
 class Config:
     # Network
@@ -36,3 +43,7 @@ class Config:
 
     # Global blocklist expiry (seconds), default 24 hours
     BLOCKLIST_EXPIRY_SECONDS = int(os.environ.get("BLOCKLIST_EXPIRY_SECONDS", 86400))
+
+    # Optional HTTPS — set both to enable TLS
+    SSL_CERT = os.environ.get("SSL_CERT", "")  # Path to PEM certificate file
+    SSL_KEY  = os.environ.get("SSL_KEY", "")    # Path to PEM private key file

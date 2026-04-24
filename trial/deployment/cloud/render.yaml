@@ -1,7 +1,0 @@
-# Render.com deployment config
-services:
-  - type: web
-    name: nids-dashboard
-    runtime: python
-    buildCommand: pip install -r server/requirements.txt
-    startCommand: gunicorn server.wsgi:app

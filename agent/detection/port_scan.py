@@ -13,10 +13,10 @@ from agent.config import AgentConfig
 
 # Maps scan type flag combinator → (attack_type, threat_score)
 _SCAN_TYPES = {
-    "SYN":  ("SYN_Scan",  65),
-    "FIN":  ("FIN_Scan",  70),
-    "NULL": ("NULL_Scan", 75),
-    "XMAS": ("XMAS_Scan", 70),
+    "SYN":  ("SYN_Scan",  90),   # STRONGEST: Instant Block
+    "FIN":  ("FIN_Scan",  95),   # STRONGEST: Instant Block
+    "NULL": ("NULL_Scan", 95),   # STRONGEST: Instant Block
+    "XMAS": ("XMAS_Scan", 99),   # STRONGEST: Instant Block
 }
 
 
@@ -80,9 +80,9 @@ class PortScanDetector:
             while dq and dq[0][0] < cutoff:
                 dq.popleft()
 
-            # Count unique ports in current window
-            unique_ports = len({p for _, p in dq})
-            if unique_ports >= threshold:
+            # Count total packets in current window
+            hit_count = len(dq)
+            if hit_count >= threshold:
                 # Clear window to avoid duplicate alerts for same burst
                 dq.clear()
                 attack_type, score = _SCAN_TYPES[scan_type]

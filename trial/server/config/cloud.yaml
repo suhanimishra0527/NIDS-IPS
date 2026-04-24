@@ -1,9 +1,0 @@
-# Cloud-specific configuration overrides
-# TODO: Configure for Render/PythonAnywhere deployment
-
-port: ${PORT}
-host: "0.0.0.0"
-debug: false
-
-database:
-  url: ${DATABASE_URL}

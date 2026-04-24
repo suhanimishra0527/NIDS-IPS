@@ -1,62 +1,62 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — NIDS{% endblock %}
+{% block title %}Dashboard — NIDS Command Center{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <div class="d-flex align-items-center justify-content-between mb-4">
+<div>
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 fade-in">
         <div>
-            <h4 class="mb-0 fw-bold">System Overview</h4>
-            <small class="text-muted">Live agent status and recent threat activity</small>
+            <h3 class="fw-800 mb-1" style="letter-spacing:-.5px">System Overview</h3>
+            <p class="mb-0" style="color:var(--text-muted);font-size:.88rem">Live agent status and recent threat activity</p>
         </div>
-        <button class="btn btn-sm btn-outline-secondary" onclick="refreshData()">
+        <button class="btn-glass" onclick="refreshData()">
             <i class="bi bi-arrow-clockwise me-1"></i>Refresh
         </button>
     </div>
 
     <!-- Stat cards -->
-    <div class="row g-3 mb-4" id="stat-row">
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3 fade-in">
+            <div class="stat-card purple">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="stat-label">Total Agents</div>
-                        <div class="stat-value text-info" id="stat-total-agents">{{ total_agents }}</div>
+                        <div class="stat-value" style="color:var(--neon-purple)" id="stat-total-agents">{{ total_agents }}</div>
                     </div>
-                    <i class="bi bi-cpu stat-icon text-info"></i>
+                    <i class="bi bi-cpu-fill stat-icon" style="color:var(--neon-purple)"></i>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+        <div class="col-6 col-lg-3 fade-in fade-in-delay-1">
+            <div class="stat-card blue">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="stat-label">Online</div>
-                        <div class="stat-value" style="color:var(--accent2)" id="stat-online-agents">{{ online_agents }}
-                        </div>
+                        <div class="stat-value" style="color:var(--neon-green)" id="stat-online-agents">{{ online_agents }}</div>
                     </div>
-                    <i class="bi bi-activity stat-icon" style="color:var(--accent2)"></i>
+                    <i class="bi bi-broadcast stat-icon" style="color:var(--neon-green)"></i>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+        <div class="col-6 col-lg-3 fade-in fade-in-delay-2">
+            <div class="stat-card amber">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="stat-label">Total Alerts</div>
-                        <div class="stat-value text-warning" id="stat-total-alerts">{{ total_alerts }}</div>
+                        <div class="stat-value" style="color:var(--neon-amber)" id="stat-total-alerts">{{ total_alerts }}</div>
                     </div>
-                    <i class="bi bi-exclamation-triangle stat-icon text-warning"></i>
+                    <i class="bi bi-lightning-charge-fill stat-icon" style="color:var(--neon-amber)"></i>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
+        <div class="col-6 col-lg-3 fade-in fade-in-delay-3">
+            <div class="stat-card rose">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="stat-label">Blocked IPs</div>
-                        <div class="stat-value text-danger" id="stat-active-blocks">{{ active_blocks }}</div>
+                        <div class="stat-value" style="color:var(--neon-rose)" id="stat-active-blocks">{{ active_blocks }}</div>
                     </div>
-                    <i class="bi bi-ban stat-icon text-danger"></i>
+                    <i class="bi bi-shield-x stat-icon" style="color:var(--neon-rose)"></i>
                 </div>
             </div>
         </div>
@@ -64,13 +64,13 @@
 
     <div class="row g-3">
         <!-- Agent grid -->
-        <div class="col-lg-5">
-            <div class="card-custom h-100">
+        <div class="col-lg-5 fade-in fade-in-delay-1">
+            <div class="glass-card h-100">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <span><i class="bi bi-hdd-network me-2"></i>Agents</span>
-                    <span class="badge bg-secondary" id="agents-count">{{ total_agents }}</span>
+                    <span><i class="bi bi-hdd-rack-fill me-2" style="color:var(--neon-cyan)"></i>Agents</span>
+                    <span class="badge" style="background:var(--grad-purple);font-size:.7rem" id="agents-count">{{ total_agents }}</span>
                 </div>
-                <div class="p-3" id="agents-container" style="max-height:480px;overflow-y:auto;">
+                <div class="p-3" id="agents-container" style="max-height:500px;overflow-y:auto;">
                     {% for item in agent_data %}
                     {% set a = item.agent %}
                     {% set m = item.metrics %}
@@ -78,45 +78,49 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="pulse-{{ a.status }} me-2"></span>
-                                <strong>{{ a.name }}</strong>
-                                <span class="badge badge-{{ a.status }} ms-2">{{ a.status }}</span>
+                                <strong style="font-size:.95rem">{{ a.name }}</strong>
+                                <span class="badge badge-{{ a.status }} ms-2" style="font-size:.68rem">{{ a.status }}</span>
                             </div>
-                            <small class="text-muted">{{ a.ip_address or '—' }}</small>
+                            <small style="color:var(--text-muted);font-size:.78rem">{{ a.ip_address or '' }}</small>
                         </div>
                         {% if m %}
-                        <div class="row mt-2 g-2" style="font-size:.78rem">
-                            <div class="col-6 text-muted">CPU: <span class="text-light">{{ m.cpu_percent or '—'
-                                    }}%</span></div>
-                            <div class="col-6 text-muted">MEM: <span class="text-light">{{ m.mem_percent or '—'
-                                    }}%</span></div>
-                            <div class="col-6 text-muted">PPS: <span class="text-light">{{ m.packets_per_sec or '—'
-                                    }}</span></div>
-                            <div class="col-6 text-muted">Queue: <span class="text-light">{{ m.alerts_in_queue or '0'
-                                    }}</span></div>
+                        <div class="row mt-2 g-1" style="font-size:.78rem">
+                            <div class="col-6"><span style="color:var(--text-muted)">CPU</span>
+                                <span class="ms-1 fw-600" style="color:var(--neon-cyan)">{{ m.cpu_percent or '—' }}%</span>
+                            </div>
+                            <div class="col-6"><span style="color:var(--text-muted)">MEM</span>
+                                <span class="ms-1 fw-600" style="color:var(--neon-purple)">{{ m.mem_percent or '—' }}%</span>
+                            </div>
+                            <div class="col-6"><span style="color:var(--text-muted)">PPS</span>
+                                <span class="ms-1 fw-600">{{ m.packets_per_sec or '—' }}</span>
+                            </div>
+                            <div class="col-6"><span style="color:var(--text-muted)">Queue</span>
+                                <span class="ms-1 fw-600">{{ m.alerts_in_queue or '0' }}</span>
+                            </div>
                         </div>
                         {% endif %}
-                        <div class="mt-1" style="font-size:.72rem;color:var(--text-muted)">
+                        <div class="mt-1" style="font-size:.7rem;color:var(--text-muted)">
                             Last seen: {{ a.last_seen.strftime('%H:%M:%S UTC') if a.last_seen else 'never' }}
                         </div>
                     </div>
                     {% else %}
-                    <div class="text-center py-4 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i>No agents
-                        registered yet</div>
+                    <div class="text-center py-5" style="color:var(--text-muted)">
+                        <i class="bi bi-inbox fs-1 d-block mb-2" style="opacity:.3"></i>No agents registered
+                    </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
 
-        <!-- Recent alerts feed -->
-        <div class="col-lg-7">
-            <div class="card-custom h-100">
+        <!-- Recent alerts -->
+        <div class="col-lg-7 fade-in fade-in-delay-2">
+            <div class="glass-card h-100">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <span><i class="bi bi-activity me-2"></i>Recent Alerts</span>
-                    <a href="/alerts" class="btn btn-sm btn-outline-secondary btn-sm" style="font-size:.75rem">View
-                        all</a>
+                    <span><i class="bi bi-lightning-charge-fill me-2" style="color:var(--neon-amber)"></i>Recent Alerts</span>
+                    <a href="/alerts" class="btn-glass" style="font-size:.75rem;padding:.25rem .7rem">View all</a>
                 </div>
                 <div style="overflow-x:auto;">
-                    <table class="table table-dark table-hover mb-0" style="font-size:.82rem">
+                    <table class="table table-glass mb-0" style="font-size:.82rem">
                         <thead>
                             <tr>
                                 <th>Time</th>
@@ -130,18 +134,16 @@
                         <tbody id="alerts-tbody">
                             {% for alert in recent_alerts %}
                             <tr>
-                                <td class="text-muted">{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
-                                <td>{{ alert.agent.name if alert.agent else '—' }}</td>
-                                <td><code style="color:var(--accent)">{{ alert.src_ip }}</code></td>
-                                <td>{{ alert.attack_type }}</td>
-                                <td><span class="badge badge-{{ alert.severity|lower }}">{{ alert.severity }}</span>
-                                </td>
-                                <td><span class="badge badge-{{ alert.action_taken|lower }}">{{ alert.action_taken
-                                        }}</span></td>
+                                <td style="color:var(--text-muted)">{{ alert.timestamp.strftime('%H:%M:%S') }}</td>
+                                <td style="color:#f1f5f9;font-weight:500">{{ alert.agent.name if alert.agent else '—' }}</td>
+                                <td><code style="color:var(--neon-cyan)">{{ alert.src_ip }}</code></td>
+                                <td><span class="fw-600" style="color:#f1f5f9">{{ alert.attack_type }}</span></td>
+                                <td><span class="badge badge-{{ alert.severity|lower }}">{{ alert.severity }}</span></td>
+                                <td><span class="badge badge-{{ alert.action_taken|lower }}">{{ alert.action_taken }}</span></td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-3">No alerts yet</td>
+                                <td colspan="6" class="text-center py-4" style="color:var(--text-muted)">No alerts yet</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -165,22 +167,20 @@
             document.getElementById('stat-active-blocks').textContent = d.active_blocks;
             updateRefreshTime();
 
-            // Rebuild alerts table
             const tbody = document.getElementById('alerts-tbody');
             if (d.recent_alerts && d.recent_alerts.length) {
                 tbody.innerHTML = d.recent_alerts.map(a => `
         <tr>
-          <td class="text-muted">${new Date(a.timestamp).toLocaleTimeString()}</td>
-          <td>${a.agent_name || '—'}</td>
-          <td><code style="color:var(--accent)">${a.src_ip}</code></td>
-          <td>${a.attack_type}</td>
+          <td style="color:var(--text-muted)">${new Date(a.timestamp).toLocaleTimeString()}</td>
+          <td style="color:#f1f5f9;font-weight:500">${a.agent_name || '—'}</td>
+          <td><code style="color:var(--neon-cyan)">${a.src_ip}</code></td>
+          <td><span class="fw-600" style="color:#f1f5f9">${a.attack_type}</span></td>
           <td><span class="badge badge-${(a.severity || '').toLowerCase()}">${a.severity}</span></td>
           <td><span class="badge badge-${(a.action_taken || '').toLowerCase()}">${a.action_taken}</span></td>
         </tr>`).join('');
             }
         } catch (e) { console.error('Refresh failed:', e); }
     }
-    // Auto-refresh every 10 seconds
-    setInterval(refreshData, 10000);
+    setInterval(refreshData, 2000);  // INSTANT: Refresh every 2 seconds
 </script>
 {% endblock %}

@@ -54,9 +54,9 @@ class PacketCapture:
     # ------------------------------------------------------------------
 
     def start(self):
-        """Start sniffing in the calling thread (blocks until stop() is called)."""
+        """Start sniffing using AsyncSniffer for robust threading and performance."""
         try:
-            from scapy.sendrecv import sniff
+            from scapy.sendrecv import AsyncSniffer
         except ImportError:
             print("[capture] Scapy not installed — capture disabled.", file=sys.stderr)
             return
@@ -66,17 +66,23 @@ class PacketCapture:
             "prn":     self._process_packet,
             "filter":  self._bpf,
             "store":   False,
-            "stop_filter": lambda _: not self._running,
         }
         if self._iface:
             kwargs["iface"] = self._iface
 
         print(f"[capture] Sniffing on interface '{self._iface or 'default'}' with filter '{self._bpf}'")
-        from scapy.sendrecv import sniff
-        sniff(**kwargs)
+        self._sniffer = AsyncSniffer(**kwargs)
+        self._sniffer.start()
+        
+        # Keep the thread alive while running
+        import time
+        while self._running:
+            time.sleep(1)
 
     def stop(self):
         self._running = False
+        if hasattr(self, '_sniffer') and self._sniffer.running:
+            self._sniffer.stop()
 
     # ------------------------------------------------------------------
     # Internal
@@ -102,6 +108,9 @@ class PacketCapture:
         if self._blocklist.is_blocked(src_ip):
             return
 
+        # DEBUG VISIBILITY: Packet received
+        # print(f"[capture debug] Received IP packet {src_ip} -> {dst_ip}")
+
         # 2. Rate anomaly check (all IP packets)
         result = self._anomaly.process_packet(src_ip)
         if result:
@@ -125,6 +134,8 @@ class PacketCapture:
             src_port = tcp.sport
             dst_port = tcp.dport
             flags_int = int(tcp.flags)
+
+            print(f"[capture debug] TCP {src_ip}:{src_port} -> {dst_ip}:{dst_port} flags={flags_int}")
 
             # Port scan detection
             ps_result = self._portscan.process_packet(src_ip, dst_port, flags_int)
@@ -163,6 +174,7 @@ class PacketCapture:
         # 4. UDP payload signature check
         elif pkt.haslayer(UDP):
             udp = pkt[UDP]
+            print(f"[capture debug] UDP {src_ip}:{udp.sport} -> {dst_ip}:{udp.dport}")
             payload = self._extract_payload(pkt)
             if payload:
                 sig_results = detect_signatures(payload)
@@ -181,11 +193,14 @@ class PacketCapture:
 
     @staticmethod
     def _extract_payload(pkt) -> str:
-        """Extract raw payload bytes and decode as UTF-8 (best-effort)."""
+        """Robustly extract raw payload bytes using Scapy's Raw layer and decode as UTF-8."""
+        from scapy.packet import Raw
         try:
-            raw = bytes(pkt.payload.payload.payload)  # IP/TCP|UDP/payload
-            if not raw:
-                return ""
-            return raw.decode("utf-8", errors="replace")
+            if pkt.haslayer(Raw):
+                raw = bytes(pkt[Raw].load)
+                if not raw:
+                    return ""
+                return raw.decode("utf-8", errors="replace")
+            return ""
         except Exception:
             return ""

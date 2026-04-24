@@ -1,1 +1,0 @@
-"""Communication package — server interaction."""

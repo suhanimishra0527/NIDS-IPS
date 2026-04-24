@@ -1,2 +1,0 @@
-# Custom attack payloads
-# TODO: Add custom strings for testing

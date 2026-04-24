@@ -11,9 +11,9 @@ from collections import defaultdict
 from agent.config import AgentConfig
 
 # Attack type and score assigned when rate threshold is exceeded
-ANOMALY_ATTACK_TYPE = "RateAnomaly"
-ANOMALY_SCORE     = 55
-ANOMALY_SEVERITY  = "MEDIUM"
+ANOMALY_ATTACK_TYPE = "RateAnomaly_Flood"
+ANOMALY_SCORE     = 95          # STRONGEST: Instant Block
+ANOMALY_SEVERITY  = "CRITICAL"  # Upgraded from MEDIUM
 
 
 class AnomalyDetector:
@@ -55,7 +55,7 @@ class AnomalyDetector:
 
             entry["count"] += 1
 
-            if entry["count"] == threshold:
+            if entry["count"] >= threshold:
                 # Fire exactly once per window when threshold first crossed
                 return (ANOMALY_ATTACK_TYPE, ANOMALY_SCORE, src_ip)
 

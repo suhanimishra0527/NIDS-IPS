@@ -1,8 +1,15 @@
 """
 Agent configuration — driven entirely by environment variables.
-Set these in /etc/nids/agent.env or export before running.
+Loads .env automatically via python-dotenv (local .env first, then /etc/nids/agent.env).
 """
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env from working directory first, then system-wide fallback
+load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=False)
+load_dotenv(dotenv_path="/etc/nids/agent.env", override=False)
 
 
 class AgentConfig:
@@ -34,7 +41,7 @@ class AgentConfig:
 
     # Port scan detection
     PORTSCAN_WINDOW_SEC  = int(os.environ.get("PORTSCAN_WINDOW_SEC",  10))
-    PORTSCAN_THRESHOLD   = int(os.environ.get("PORTSCAN_THRESHOLD",   20))
+    PORTSCAN_THRESHOLD   = int(os.environ.get("PORTSCAN_THRESHOLD",   3))    # STRONGEST: trigger after 3 ports
 
     # Anomaly detection (packets per second threshold per IP)
-    ANOMALY_PPS_THRESHOLD = int(os.environ.get("ANOMALY_PPS_THRESHOLD", 500))
+    ANOMALY_PPS_THRESHOLD = int(os.environ.get("ANOMALY_PPS_THRESHOLD", 10)) # STRONGEST: trigger at 10 pps

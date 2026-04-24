@@ -1,12 +1,14 @@
 """
 Local blocklist with 1-hour TTL (configurable).
 Thread-safe in-memory store with background expiry cleanup.
+Also removes iptables DROP rules when entries expire.
 """
 import threading
 import time
 from datetime import datetime, timezone
 
 from agent.config import AgentConfig
+from agent.ips import unblock_ip
 
 
 class LocalBlocklist:
@@ -42,13 +44,18 @@ class LocalBlocklist:
                 return False
             if datetime.now(timezone.utc) >= expiry:
                 del self._entries[ip]
+                # Remove the iptables DROP rule since the block has expired
+                unblock_ip(ip)
                 return False
             return True
 
     def remove(self, ip: str) -> bool:
-        """Manually remove an IP. Returns True if it was present."""
+        """Manually remove an IP and its iptables rule. Returns True if it was present."""
         with self._lock:
-            return self._entries.pop(ip, None) is not None
+            was_present = self._entries.pop(ip, None) is not None
+        if was_present:
+            unblock_ip(ip)
+        return was_present
 
     def all_active(self) -> list[str]:
         """Return list of currently active (non-expired) blocked IPs."""
@@ -64,7 +71,7 @@ class LocalBlocklist:
     # ------------------------------------------------------------------
 
     def _cleanup_loop(self):
-        """Remove expired entries every 60 seconds."""
+        """Remove expired entries and their iptables rules every 60 seconds."""
         while True:
             time.sleep(60)
             now = datetime.now(timezone.utc)
@@ -72,5 +79,8 @@ class LocalBlocklist:
                 expired = [ip for ip, exp in self._entries.items() if now >= exp]
                 for ip in expired:
                     del self._entries[ip]
+            # Remove iptables rules outside the lock (subprocess calls are slow)
+            for ip in expired:
+                unblock_ip(ip)
             if expired:
-                print(f"[blocklist] Cleaned {len(expired)} expired entries.")
+                print(f"[blocklist] Cleaned {len(expired)} expired entries + removed iptables rules.")
